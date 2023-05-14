@@ -65,8 +65,15 @@ def summarize_audio(filename):
                 summary.append(sentence)
                 break
 
-    return summary
+    bullet_points = "<ul>\n"
+    for bullet_sentence in summary:
+        bullet_points += f"<li>{bullet_sentence}</li>\n"
+    bullet_points += "</ul>"
 
+    summary = bullet_points
+
+    return bullet_points
+    
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
@@ -99,7 +106,7 @@ def download_summary(summary):
 
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=inch, rightMargin=inch)
     style = ParagraphStyle(name='Normal', fontName='Helvetica', fontSize=12, leading=16)
-    p = Paragraph(summary, style=style)
+    p = Paragraph(bulletText= summary, style=style)
     doc.build([Spacer(1, 2*inch), p])
     response = make_response(buffer.getvalue())
     response.headers['Content-Disposition'] = 'attachment; filename=summary.pdf'
