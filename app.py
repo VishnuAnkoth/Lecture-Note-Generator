@@ -84,7 +84,7 @@ def upload_file():
             summary = summarize_audio(
                 os.path.join(app.config["UPLOAD_FOLDER"], filename)
             )
-            return render_template("summary.html", summary=summary)
+            return render_template("index.html", summary=summary)
     return render_template("index.html")
 
 
