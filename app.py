@@ -85,7 +85,7 @@ def upload_file():
                 os.path.join(app.config["UPLOAD_FOLDER"], filename)
             )
             return render_template("summary.html", summary=summary)
-    return render_template("upload.html")
+    return render_template("index.html")
 
 
 #@app.route("/summary")
