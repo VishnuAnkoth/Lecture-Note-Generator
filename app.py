@@ -4,9 +4,11 @@ from werkzeug.utils import secure_filename
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.styles import ParagraphStyle
 
+import re
 from io import BytesIO
 
 from transformers import pipeline
@@ -61,18 +63,28 @@ def summarize_audio(filename):
     summary = []
     for sentence in sentences:
         for word in top_words:
-            if word in sentence:
+            if word in sentence: 
                 summary.append(sentence)
                 break
 
-    bullet_points = "<ul>\n"
-    for bullet_sentence in summary:
-        bullet_points += f"<li>{bullet_sentence}</li>\n"
-    bullet_points += "</ul>"
+    return summary 
 
-    summary = bullet_points
+    # bullet_points = "<ul>\n"
+    # for bullet_sentence in summary:
+    #     bullet_points += f"<li>{bullet_sentence}</li>\n"
+    # bullet_points += "</ul>"
+    # return bullet_points
 
-    return bullet_points
+    # btlist = []
+    # btlist = "<ul>"
+    # for item in summary:
+    #     btlist += "<li>{}</li>".format(item)   
+    # btlist += "</ul>"
+    # return btlist
+
+    # bullet_points = [" • " + str(item) for item in summary]
+    # return bullet_points
+            
     
 
 @app.route("/", methods=["GET", "POST"])
@@ -106,10 +118,30 @@ def download_summary(summary):
 
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=inch, rightMargin=inch)
     style = ParagraphStyle(name='Normal', fontName='Helvetica', fontSize=12, leading=16)
-    p = Paragraph(bulletText= summary, style=style)
-    doc.build([Spacer(1, 2*inch), p])
+
+
+    # Remove first two characters from the first element
+    # summary[0] = summary[0][2:]
+    # Remove last two characters from the last element
+    # summary[-1] = summary[-1][:-2]
+
+
+    # Split summary into sentences
+    sentences = summary.split("', '")
+    # pattern = r'\', "|", "|", \''
+    # sentences = re.split(pattern, summary)
+
+    # Create a list of bullet points
+    bullet_points = []
+    for sentence in sentences:
+        bullet_points.append(Paragraph(f'{sentence}', style))
+
+    # Build the PDF document
+    doc.build([Spacer(1, 2*inch), ListFlowable(bullet_points, bulletType='bullet')])
+
+    # Prepare the response
     response = make_response(buffer.getvalue())
-    response.headers['Content-Disposition'] = 'attachment; filename=summary.pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=demo.pdf'
     response.headers['Content-Type'] = 'application/pdf'
     return response
 
