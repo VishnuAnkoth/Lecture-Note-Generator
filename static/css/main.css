@@ -1942,7 +1942,7 @@ input[type="file"]::file-selector-button:hover {
   height: auto;
   padding: 20px;
   border-radius: 10px;
-  border: 2px dashed #555;
+  border: 2px dashed #999;
   color: #444;
   cursor: pointer;
   transition: background .2s ease-in-out, border .2s ease-in-out;
@@ -1968,11 +1968,11 @@ input[type="file"]::file-selector-button:hover {
 input[type=file] {
   width: 350px;
   max-width: 100%;
-  color: #444;
+  color: #777;
   padding: 5px;
   margin-top: 40px;
   border-radius: 10px;
-  border: 1px solid #555;
+  border: 1px solid #999;
 }
 
 input[type=file]::file-selector-button {
@@ -2021,6 +2021,7 @@ input[type=file]::file-selector-button:hover {
   position: relative;
   background: var(--color-primary);
   padding: 60px 0 0 0;
+  min-height: 650px;
 }
 
 @media (min-width: 1365px) {
