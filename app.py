@@ -14,7 +14,7 @@ from io import BytesIO
 from transformers import pipeline
 import speech_recognition as sr
 
-summarizer = pipeline("summarization")
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 import nltk
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
