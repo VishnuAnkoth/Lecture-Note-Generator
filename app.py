@@ -14,7 +14,7 @@ from io import BytesIO
 from transformers import pipeline
 import speech_recognition as sr
 
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+summarizer = pipeline("summarization",model="facebook/bart-large-cnn")
 import nltk
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
@@ -44,30 +44,42 @@ def summarize_audio(filename):
     model = whisper.load_model("base")
     result = model.transcribe(filename, fp16=False)
     article = result["text"]
-    sentences = sent_tokenize(article)
-    words = word_tokenize(article)
 
-    stop_words = set(stopwords.words("english"))
-    filtered_words = [
-        word for word in words if word.casefold() not in stop_words and word.isalpha()
-    ]
 
-    stemmer = PorterStemmer()
-    stemmed_words = [stemmer.stem(word) for word in filtered_words]
+    ## Using BART To Create a Summarise
+    summary = summarizer(article, max_length = 300, min_length = 30, do_sample=False)[0]['summary_text']
 
-    fdist = FreqDist(stemmed_words)
+    
 
-    #top_words = [pair[0] for pair in fdist.most_common(10)]
-    top_words = [pair[0] for pair in fdist.most_common(5)]
+    # sentences = sent_tokenize(article)
+    # words = word_tokenize(article)
 
-    summary = []
-    for sentence in sentences:
-        for word in top_words:
-            if word in sentence: 
-                summary.append(sentence)
-                break
+    # stop_words = set(stopwords.words("english"))
+    # filtered_words = [
+    #     word for word in words if word.casefold() not in stop_words and word.isalpha()
+    # ]
 
-    return summary 
+    # stemmer = PorterStemmer()
+    # stemmed_words = [stemmer.stem(word) for word in filtered_words]
+
+    # fdist = FreqDist(stemmed_words)
+
+    # #top_words = [pair[0] for pair in fdist.most_common(10)]
+    # top_words = [pair[0] for pair in fdist.most_common(5)]
+
+    # summary = []
+    # for sentence in sentences:
+    #     for word in top_words:
+    #         if word in sentence: 
+    #             summary.append(sentence)
+    #             break
+    sumlist = summary.split('. ')
+    for i in range(len(sumlist)):
+        if not sumlist[i].endswith('.'):
+            sumlist[i] += '.'
+    print(len(sumlist))
+    print(sumlist)
+    return sumlist
 
     # bullet_points = "<ul>\n"
     # for bullet_sentence in summary:
@@ -117,27 +129,31 @@ def download_summary(summary):
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=inch, rightMargin=inch)
-    style = ParagraphStyle(name='Normal', fontName='Helvetica', fontSize=12, leading=16)
 
-
-    # Remove first two characters from the first element
-    # summary[0] = summary[0][2:]
-    # Remove last two characters from the last element
-    # summary[-1] = summary[-1][:-2]
-
+    # style_heading = ParagraphStyle(name='Normal', fontName='Times-Roman', fontSize=18, leading=22, alignment='center')
+    style = ParagraphStyle(name='Normal', fontName='Times-Roman', fontSize=14, leading=16)
 
     # Split summary into sentences
     sentences = summary.split("', '")
-    # pattern = r'\', "|", "|", \''
-    # sentences = re.split(pattern, summary)
+
+    # Reformatting the text
+    sentences[0] = sentences[0][2:]
+    sentences[-1] = sentences[-1][:-2]
 
     # Create a list of bullet points
     bullet_points = []
+
+    # Add the heading
+    heading = Paragraph('Notes', style)
+    bullet_points.append(heading)
+    bullet_points.append(Spacer(1, 0.5*inch))
+
+    # Add the sentences as bullet points
     for sentence in sentences:
-        bullet_points.append(Paragraph(f'{sentence}', style))
+        bullet_points.append(Paragraph(f'• {sentence}', style))
 
     # Build the PDF document
-    doc.build([Spacer(1, 2*inch), ListFlowable(bullet_points, bulletType='bullet')])
+    doc.build(bullet_points)
 
     # Prepare the response
     response = make_response(buffer.getvalue())
