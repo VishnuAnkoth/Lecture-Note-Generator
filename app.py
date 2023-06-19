@@ -1,32 +1,18 @@
 import os
-from flask import Flask, flash, request, render_template, redirect, url_for, make_response,send_file
+from flask import Flask, flash, request, render_template, redirect, make_response
 from werkzeug.utils import secure_filename
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import ParagraphStyle
 
-import re
 from io import BytesIO
 
 from transformers import pipeline
-import speech_recognition as sr
 
-summarizer = pipeline("summarization",model="facebook/bart-large-cnn")
-import nltk
-from nltk.tokenize import sent_tokenize
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
-from nltk import FreqDist
-
-nltk.download("punkt")
-nltk.download("stopwords")
 import whisper
 
-
+summarizer = pipeline("summarization",model="facebook/bart-large-cnn")
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "upload"
@@ -46,21 +32,19 @@ def summarize_audio(filename):
     model = whisper.load_model("base")
     result = model.transcribe(filename, fp16=False)
 
-    article = result["text"]
+    transcript = result["text"]
 
-    ## Using BART To Create a Summary
-    summary = summarizer(article, max_length = 300, min_length = 30, do_sample=False)[0]['summary_text']
+    ## Using BART To Create a Summary of the transcript
+    summary = summarizer(transcript, max_length = 300, min_length = 30, do_sample=False)[0]['summary_text']
 
+    ## Postprocessing
+    summary_list = summary.split('. ')
+    for i in range(len(summary_list)):
+        if not summary_list[i].endswith('.'):
+            summary_list[i] += '.'
 
-    sumlist = summary.split('. ')
-    for i in range(len(sumlist)):
-        if not sumlist[i].endswith('.'):
-            sumlist[i] += '.'
-    print(len(sumlist))
-    print(sumlist)
-    return sumlist
+    return summary_list
 
- 
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
@@ -81,11 +65,6 @@ def upload_file():
             return render_template("index.html", summary=summary)
     return render_template("index.html")
 
-
-#@app.route("/summary")
-#def summary():
-    #summary = request.args.get("summary")
-    #return render_template("summary.html", summary=summary)
 
 @app.route('/download_summary/<summary>')
 def download_summary(summary):
