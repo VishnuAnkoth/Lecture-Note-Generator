@@ -41,38 +41,17 @@ def allowed_file(filename):
 
 
 def summarize_audio(filename):
+
+     ## Using Whisper API For Transcribing
     model = whisper.load_model("base")
     result = model.transcribe(filename, fp16=False)
+
     article = result["text"]
 
-
-    ## Using BART To Create a Summarise
+    ## Using BART To Create a Summary
     summary = summarizer(article, max_length = 300, min_length = 30, do_sample=False)[0]['summary_text']
 
-    
 
-    # sentences = sent_tokenize(article)
-    # words = word_tokenize(article)
-
-    # stop_words = set(stopwords.words("english"))
-    # filtered_words = [
-    #     word for word in words if word.casefold() not in stop_words and word.isalpha()
-    # ]
-
-    # stemmer = PorterStemmer()
-    # stemmed_words = [stemmer.stem(word) for word in filtered_words]
-
-    # fdist = FreqDist(stemmed_words)
-
-    # #top_words = [pair[0] for pair in fdist.most_common(10)]
-    # top_words = [pair[0] for pair in fdist.most_common(5)]
-
-    # summary = []
-    # for sentence in sentences:
-    #     for word in top_words:
-    #         if word in sentence: 
-    #             summary.append(sentence)
-    #             break
     sumlist = summary.split('. ')
     for i in range(len(sumlist)):
         if not sumlist[i].endswith('.'):
@@ -81,23 +60,7 @@ def summarize_audio(filename):
     print(sumlist)
     return sumlist
 
-    # bullet_points = "<ul>\n"
-    # for bullet_sentence in summary:
-    #     bullet_points += f"<li>{bullet_sentence}</li>\n"
-    # bullet_points += "</ul>"
-    # return bullet_points
-
-    # btlist = []
-    # btlist = "<ul>"
-    # for item in summary:
-    #     btlist += "<li>{}</li>".format(item)   
-    # btlist += "</ul>"
-    # return btlist
-
-    # bullet_points = [" • " + str(item) for item in summary]
-    # return bullet_points
-            
-    
+ 
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
