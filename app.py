@@ -1,23 +1,19 @@
 import os
+from io import BytesIO
 from flask import Flask, flash, request, render_template, redirect, make_response
+
+from transformers import pipeline
+import whisper
+
 from werkzeug.utils import secure_filename
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import ParagraphStyle
 
-from io import BytesIO
-
-from transformers import pipeline
-
-import whisper
-
-summarizer = pipeline("summarization",model="facebook/bart-large-cnn")
-
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "upload"
 app.config["ALLOWED_EXTENSIONS"] = {"mp3"}
-
 
 def allowed_file(filename):
     return (
@@ -26,16 +22,21 @@ def allowed_file(filename):
     )
 
 
+
 def summarize_audio(filename):
 
-     ## Using Whisper API For Transcribing
+     ## Using OpenAI Whisper API For Transcribing
     model = whisper.load_model("base")
     result = model.transcribe(filename, fp16=False)
 
     transcript = result["text"]
 
-    ## Using BART To Create a Summary of the transcript
-    summary = summarizer(transcript, max_length = 300, min_length = 30, do_sample=False)[0]['summary_text']
+    # Download and Load Facebook's Open Source BART LLM using the HuggingFace Transformer Pipeline
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+    # Create Summary of the transcript using BART
+    summary_object = summarizer(transcript, max_length=300, min_length=30, do_sample=False)
+    summary = summary_object[0]['summary_text']
 
     ## Postprocessing
     summary_list = summary.split('. ')
